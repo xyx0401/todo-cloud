@@ -1,0 +1,166 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="head(title)">
+  <title th:replace="${title}">Spring MySQL Todo Sample</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <!-- Bootstrap -->
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" 
+    href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" 
+    crossorigin="anonymous">
+  
+  <!-- 自定义CSS修复兼容性问题 -->
+  <style>
+    /* 修复Safari兼容性问题 */
+    .user-select-none {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    /* 其他通用样式 */
+    .btn:focus, .btn:active:focus {
+      outline: none;
+    }
+    
+    .form-control:focus {
+      border-color: #66afe9;
+      outline: 0;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
+      box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
+    }
+  </style>
+
+</head>
+
+<body style="padding-top:50px;" th:fragment="body(heading, content)">
+  <!-- Nav Bar -->
+
+  <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">Todo List</a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">
+            <span class="glyphicon glyphicon-list"></span> Todo列表
+          </a></li>
+          <!-- 管理员菜单 -->
+          <li class="dropdown" th:if="${session.username == 'admin'}">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+              <span class="glyphicon glyphicon-cog"></span> 系统管理 <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="/admin/users">
+                <span class="glyphicon glyphicon-user"></span> 用户管理
+              </a></li>
+              <li class="divider"></li>
+              <li><a href="/admin/users/new">
+                <span class="glyphicon glyphicon-plus"></span> 新增用户
+              </a></li>
+            </ul>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
+              <span class="glyphicon glyphicon-user"></span> 
+              <span th:text="${session.username != null ? session.username : '用户'}">用户</span>
+              <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+              <li class="dropdown-header">当前用户</li>
+              <li><a href="#" onclick="showUserInfo()">
+                <span class="glyphicon glyphicon-info-sign"></span> 个人信息
+              </a></li>
+              <li class="divider"></li>
+              <li><a href="/logout">
+                <span class="glyphicon glyphicon-log-out"></span> 退出登录
+              </a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="container">
+    <h1 th:replace="${heading}">Page Heading</h1>
+
+    <hr />
+
+    <th:block th:replace="${content}" />
+
+  </div>
+  
+  <!-- Placed at the end of the document so the pages load faster -->
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
+    integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" 
+    crossorigin="anonymous">
+    </script>
+
+  <!-- 全局JavaScript -->
+  <script>
+    // 显示用户信息
+    function showUserInfo() {
+      var username = /*[[${session.username}]]*/ '用户';
+      var userId = /*[[${session.userId}]]*/ null;
+      
+      var info = '用户信息：\n';
+      info += '用户名：' + username + '\n';
+      info += '用户ID：' + (userId ? userId : '未知') + '\n';
+      info += '登录状态：已登录';
+      
+      alert(info);
+    }
+
+    // 全局错误处理
+    $(document).ajaxError(function(event, xhr, settings, error) {
+      if (xhr.status === 401) {
+        alert('登录已过期，请重新登录');
+        window.location.href = '/login';
+      } else if (xhr.status === 403) {
+        alert('权限不足');
+      } else if (xhr.status >= 500) {
+        alert('服务器错误，请稍后重试');
+      }
+    });
+
+    // 页面加载完成后的初始化
+    $(document).ready(function() {
+      // 自动关闭alert消息
+      setTimeout(function() {
+        $('.alert-dismissible').fadeOut();
+      }, 5000);
+
+      // 为所有按钮添加加载状态
+      $('.btn[type="submit"]').click(function() {
+        var btn = $(this);
+        if (!btn.hasClass('disabled')) {
+          setTimeout(function() {
+            btn.addClass('disabled').find('.glyphicon').addClass('glyphicon-spin');
+          }, 100);
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

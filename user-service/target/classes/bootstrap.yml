@@ -1,0 +1,17 @@
+spring:
+  config:
+    import: optional:nacos:${spring.application.name}.${spring.cloud.nacos.config.file-extension}
+  application:
+    name: user-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        namespace: public
+        timeout: 10000
+        refresh-enabled: true
+        group: DEFAULT_GROUP 

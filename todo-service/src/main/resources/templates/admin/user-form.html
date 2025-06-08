@@ -1,0 +1,396 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="base :: head(~{::title})">
+  <title th:text="${isEdit ? '编辑用户' : '新增用户'}">用户管理 - Todo系统</title>
+</head>
+
+<body th:replace="base :: body(~{::h1}, ~{::section})">
+  <h1 th:text="${isEdit ? '编辑用户' : '新增用户'}">用户管理</h1>
+
+  <section>
+    <!-- 面包屑导航 -->
+    <ol class="breadcrumb">
+      <li><a href="/">首页</a></li>
+      <li><a href="/admin/users">用户管理</a></li>
+      <li class="active" th:text="${isEdit ? '编辑用户' : '新增用户'}">编辑用户</li>
+    </ol>
+
+    <!-- 消息提示 -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <span th:text="${error}"></span>
+    </div>
+
+    <!-- 用户表单 -->
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="glyphicon glyphicon-user"></span>
+              <span th:text="${isEdit ? ('编辑用户 - ' + user.username) : '新增用户'}">用户信息</span>
+            </h4>
+          </div>
+          <div class="panel-body">
+            <form method="post" action="/admin/users/save" id="userForm" class="form-horizontal">
+              <!-- 隐藏字段 -->
+              <input type="hidden" th:field="${user.id}" th:if="${isEdit}">
+              <input type="hidden" name="isEdit" th:value="${isEdit}">
+
+              <!-- 用户名 -->
+              <div class="form-group">
+                <label for="username" class="col-sm-3 control-label">
+                  <span class="text-danger">*</span> 用户名
+                </label>
+                <div class="col-sm-9">
+                  <input type="text" 
+                         class="form-control" 
+                         id="username" 
+                         name="username"
+                         th:value="${user.username}"
+                         placeholder="请输入用户名"
+                         required
+                         minlength="3"
+                         maxlength="50"
+                         pattern="^[a-zA-Z0-9_-]+$">
+                  <span class="help-block">用户名长度3-50位，只能包含字母、数字、下划线和横线</span>
+                </div>
+              </div>
+
+              <!-- 密码 -->
+              <div class="form-group">
+                <label for="password" class="col-sm-3 control-label">
+                  <span class="text-danger" th:unless="${isEdit}">*</span> 密码
+                </label>
+                <div class="col-sm-9">
+                  <input type="password" 
+                         class="form-control" 
+                         id="password" 
+                         name="password"
+                         th:placeholder="${isEdit ? '留空表示不修改密码' : '请输入密码'}"
+                         th:required="${!isEdit}"
+                         minlength="6"
+                         maxlength="100">
+                  <span class="help-block" th:text="${isEdit ? '留空表示不修改密码，最少6位字符' : '密码最少6位字符'}">
+                    密码最少6位字符
+                  </span>
+                </div>
+              </div>
+
+              <!-- 确认密码 -->
+              <div class="form-group" th:unless="${isEdit}">
+                <label for="confirmPassword" class="col-sm-3 control-label">
+                  <span class="text-danger">*</span> 确认密码
+                </label>
+                <div class="col-sm-9">
+                  <input type="password" 
+                         class="form-control" 
+                         id="confirmPassword" 
+                         name="confirmPassword"
+                         placeholder="请再次输入密码"
+                         required
+                         minlength="6"
+                         maxlength="100">
+                  <span class="help-block">请再次输入密码以确认</span>
+                </div>
+              </div>
+
+              <!-- 邮箱 -->
+              <div class="form-group">
+                <label for="email" class="col-sm-3 control-label">邮箱</label>
+                <div class="col-sm-9">
+                  <input type="email" 
+                         class="form-control" 
+                         id="email" 
+                         name="email"
+                         th:value="${user.email}"
+                         placeholder="请输入邮箱地址"
+                         maxlength="100">
+                  <span class="help-block">选填</span>
+                </div>
+              </div>
+
+              <!-- 电话 -->
+              <div class="form-group">
+                <label for="phone" class="col-sm-3 control-label">电话</label>
+                <div class="col-sm-9">
+                  <input type="text" 
+                         class="form-control" 
+                         id="phone" 
+                         name="phone"
+                         th:value="${user.phone}"
+                         placeholder="请输入电话号码"
+                         maxlength="20">
+                  <span class="help-block">选填</span>
+                </div>
+              </div>
+
+              <!-- 用户状态 -->
+              <div class="form-group">
+                <label for="status" class="col-sm-3 control-label">用户状态</label>
+                <div class="col-sm-9">
+                  <select class="form-control" id="status" name="status">
+                    <option value="1" th:selected="${user.status == 1}">启用</option>
+                    <option value="0" th:selected="${user.status == 0}">禁用</option>
+                  </select>
+                  <span class="help-block">禁用的用户无法登录系统</span>
+                </div>
+              </div>
+
+              <!-- 用户角色 -->
+              <div class="form-group">
+                <label for="isAdmin" class="col-sm-3 control-label">用户角色</label>
+                <div class="col-sm-9">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="isAdmin" name="isAdmin" value="true" 
+                             th:checked="${isUserAdmin}">
+                      设为管理员
+                    </label>
+                  </div>
+                  <span class="help-block">管理员可以访问系统管理功能</span>
+                </div>
+              </div>
+
+              <!-- 按钮 -->
+              <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-9">
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="glyphicon glyphicon-floppy-disk"></span>
+                    <span th:text="${isEdit ? '更新用户' : '创建用户'}">保存</span>
+                  </button>
+                  <a href="/admin/users" class="btn btn-default">
+                    <span class="glyphicon glyphicon-arrow-left"></span> 返回列表
+                  </a>
+                  <button type="button" class="btn btn-danger" id="deleteBtn" 
+                          th:if="${isEdit}"
+                          th:data-id="${user.id}" 
+                          th:data-username="${user.username}">
+                    <span class="glyphicon glyphicon-trash"></span> 删除用户
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 用户信息展示（编辑模式） -->
+        <div class="panel panel-info" th:if="${isEdit}">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="glyphicon glyphicon-info-sign"></span> 用户详细信息
+            </h4>
+          </div>
+          <div class="panel-body">
+            <dl class="dl-horizontal">
+              <dt>用户ID：</dt>
+              <dd th:text="${user.id}">1</dd>
+              
+              <dt>创建时间：</dt>
+              <dd th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm:ss')}" th:if="${user.createdAt}">
+                2024-01-01 12:00:00
+              </dd>
+              <dd th:unless="${user.createdAt}">未知</dd>
+              
+              <dt>更新时间：</dt>
+              <dd th:text="${#temporals.format(user.updatedAt, 'yyyy-MM-dd HH:mm:ss')}" th:if="${user.updatedAt}">
+                2024-01-01 12:00:00
+              </dd>
+              <dd th:unless="${user.updatedAt}">未知</dd>
+              
+              <dt>当前状态：</dt>
+              <dd>
+                <span class="label label-success" th:if="${user.status == 1}">启用</span>
+                <span class="label label-default" th:if="${user.status != 1}">禁用</span>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+
+  <!-- JavaScript -->
+  <script>
+    $(document).ready(function() {
+      console.log('页面DOM加载完成');
+      console.log('jQuery版本:', $.fn.jquery);
+      console.log('Bootstrap是否加载:', typeof $.fn.modal !== 'undefined');
+      
+      var isEdit = /*[[${isEdit}]]*/ false;
+      console.log('编辑模式:', isEdit);
+      
+      // 检查删除按钮是否存在
+      var deleteBtn = $('#deleteBtn');
+      console.log('删除按钮是否存在:', deleteBtn.length > 0);
+      if (deleteBtn.length > 0) {
+        console.log('删除按钮数据属性:', deleteBtn.data());
+        console.log('删除按钮HTML:', deleteBtn[0].outerHTML);
+        
+        // 测试按钮点击事件
+        deleteBtn.on('click', function() {
+          console.log('删除按钮直接点击事件触发');
+        });
+      } else {
+        console.log('警告：找不到删除按钮！');
+      }
+
+      // 删除用户
+      $(document).on('click', '#deleteBtn', function(e) {
+        e.preventDefault();
+        console.log('删除按钮被点击');
+        
+        var userId = $(this).data('id');
+        var username = $(this).data('username');
+        
+        console.log('用户ID:', userId, '用户名:', username);
+        
+        if (!userId || !username) {
+          alert('无法获取用户信息，请刷新页面重试');
+          return;
+        }
+        
+        // 简单确认后直接删除
+        if (!confirm('确定要删除用户 "' + username + '" 吗？此操作不可撤销！')) {
+          return;
+        }
+        
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> 删除中...');
+        
+        // 发送DELETE请求
+        $.ajax({
+          url: '/admin/users/' + userId + '/delete',
+          type: 'POST',
+          success: function(response) {
+            console.log('删除成功');
+            alert('用户删除成功！');
+            // 跳转到用户列表页面
+            window.location.href = '/admin/users?success=用户删除成功';
+          },
+          error: function(xhr, status, error) {
+            console.error('删除失败:', xhr.responseText);
+            $btn.prop('disabled', false).html('<span class="glyphicon glyphicon-trash"></span> 删除用户');
+            
+            if (xhr.status === 403) {
+              alert('权限不足，无法删除用户');
+            } else if (xhr.status === 404) {
+              alert('用户不存在');
+            } else if (xhr.status === 400) {
+              alert('无法删除该用户：' + (xhr.responseText || '用户可能有关联数据'));
+            } else {
+              alert('删除失败，请稍后重试');
+            }
+          }
+        });
+      });
+
+      // 表单验证
+      $('#userForm').on('submit', function(e) {
+        var isValid = true;
+        var errorMessages = [];
+
+        // 用户名验证
+        var username = $('#username').val().trim();
+        if (username.length < 3 || username.length > 50) {
+          errorMessages.push('');
+          isValid = false;
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+          errorMessages.push('用户名只能包含字母、数字、下划线和横线');
+          isValid = false;
+        }
+
+        // 密码验证
+        var password = $('#password').val();
+        var confirmPassword = $('#confirmPassword').val();
+        
+        if (!isEdit) {
+          // 新增用户时密码必填
+          if (password.length < 6) {
+            errorMessages.push('密码长度不能少于6位');
+            isValid = false;
+          }
+          if (password !== confirmPassword) {
+            errorMessages.push('两次输入的密码不一致');
+            isValid = false;
+          }
+        } else {
+          // 编辑用户时如果填写了密码则验证
+          if (password.length > 0 && password.length < 6) {
+            errorMessages.push('密码长度不能少于6位');
+            isValid = false;
+          }
+        }
+
+        // 基本邮箱格式检查
+        var email = $('#email').val().trim();
+        if (email.length > 0 && email.indexOf('@') === -1) {
+          errorMessages.push('邮箱格式不正确');
+          isValid = false;
+        }
+
+        if (!isValid) {
+          alert('表单验证失败：\n' + errorMessages.join('\n'));
+          e.preventDefault();
+          return false;
+        }
+
+        // 提交前禁用按钮防止重复提交
+        $('#submitBtn').prop('disabled', true).html(
+          '<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> 保存中...'
+        );
+      });
+
+      // 实时验证用户名
+      $('#username').on('blur', function() {
+        var username = $(this).val().trim();
+        if (username.length >= 3 && !isEdit) {
+          // 检查用户名是否已存在（调用user-service的API）
+          $.get('http://localhost:8082/api/users/check/' + encodeURIComponent(username), function(exists) {
+            if (exists) {
+              $('#username').addClass('has-error');
+              alert('用户名已存在，请选择其他用户名');
+            } else {
+              $('#username').removeClass('has-error');
+            }
+          }).fail(function() {
+            console.log('无法检查用户名是否存在');
+          });
+        }
+      });
+
+      // 密码确认验证
+      $('#confirmPassword').on('input', function() {
+        var password = $('#password').val();
+        var confirmPassword = $(this).val();
+        
+        if (confirmPassword.length > 0) {
+          if (password === confirmPassword) {
+            $(this).removeClass('has-error').addClass('has-success');
+          } else {
+            $(this).removeClass('has-success').addClass('has-error');
+          }
+        } else {
+          $(this).removeClass('has-error has-success');
+        }
+      });
+
+
+
+      // 输入框焦点样式
+      $('.form-control').focus(function() {
+        $(this).closest('.form-group').addClass('has-focus');
+      }).blur(function() {
+        $(this).closest('.form-group').removeClass('has-focus');
+      });
+    });
+  </script>
+
+</body>
+
+</html> 

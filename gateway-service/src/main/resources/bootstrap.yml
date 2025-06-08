@@ -1,0 +1,15 @@
+spring:
+  config:
+    import: optional:nacos:${spring.application.name}.${spring.cloud.nacos.config.file-extension}
+  application:
+    name: gateway-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        namespace: public
+        group: DEFAULT_GROUP 

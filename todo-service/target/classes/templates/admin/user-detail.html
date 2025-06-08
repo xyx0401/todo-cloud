@@ -1,0 +1,315 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="base :: head(~{::title})">
+  <title>用户详情 - Todo系统</title>
+</head>
+
+<body th:replace="base :: body(~{::h1}, ~{::section})">
+  <h1>用户详情</h1>
+
+  <section>
+    <!-- 面包屑导航 -->
+    <ol class="breadcrumb">
+      <li><a href="/">首页</a></li>
+      <li><a href="/admin/users">用户管理</a></li>
+      <li class="active">用户详情</li>
+    </ol>
+
+    <!-- 消息提示 -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <span th:text="${error}"></span>
+    </div>
+
+    <!-- 用户信息 -->
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        
+        <!-- 基本信息面板 -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="glyphicon glyphicon-user"></span>
+              基本信息
+              <div class="pull-right">
+                <span class="label label-success" th:if="${user.status == 1}">启用</span>
+                <span class="label label-default" th:if="${user.status != 1}">禁用</span>
+                <span class="label label-warning" th:if="${isUserAdmin}">管理员</span>
+              </div>
+            </h4>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="col-md-6">
+                <dl class="dl-horizontal">
+                  <dt>用户ID：</dt>
+                  <dd th:text="${user.id}">1</dd>
+                  
+                  <dt>用户名：</dt>
+                  <dd>
+                    <strong th:text="${user.username}">username</strong>
+                  </dd>
+                  
+                  <dt>邮箱：</dt>
+                  <dd th:text="${user.email ?: '未设置'}">email@example.com</dd>
+                  
+                  <dt>电话：</dt>
+                  <dd th:text="${user.phone ?: '未设置'}">13800138000</dd>
+                </dl>
+              </div>
+              <div class="col-md-6">
+                <dl class="dl-horizontal">
+                  <dt>状态：</dt>
+                  <dd>
+                    <span class="label label-success" th:if="${user.status == 1}">启用</span>
+                    <span class="label label-default" th:if="${user.status != 1}">禁用</span>
+                  </dd>
+                  
+                  <dt>创建时间：</dt>
+                  <dd th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm:ss')}" th:if="${user.createdAt}">
+                    2024-01-01 12:00:00
+                  </dd>
+                  <dd th:unless="${user.createdAt}">未知</dd>
+                  
+                  <dt>更新时间：</dt>
+                  <dd th:text="${#temporals.format(user.updatedAt, 'yyyy-MM-dd HH:mm:ss')}" th:if="${user.updatedAt}">
+                    2024-01-01 12:00:00
+                  </dd>
+                  <dd th:unless="${user.updatedAt}">未知</dd>
+                  
+                  <dt>账户类型：</dt>
+                  <dd>
+                    <span class="label label-warning" th:if="${isUserAdmin}">管理员账户</span>
+                    <span class="label label-info" th:unless="${isUserAdmin}">普通用户</span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="panel panel-default">
+          <div class="panel-body text-center">
+            <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-warning">
+              <span class="glyphicon glyphicon-edit"></span> 编辑用户
+            </a>
+            <a href="/admin/users" class="btn btn-default">
+              <span class="glyphicon glyphicon-arrow-left"></span> 返回列表
+            </a>
+            <button type="button" class="btn btn-info" id="refreshBtn">
+              <span class="glyphicon glyphicon-refresh"></span> 刷新信息
+            </button>
+          </div>
+        </div>
+
+        <!-- 统计信息面板 -->
+        <div class="panel panel-info">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="glyphicon glyphicon-stats"></span> 使用统计
+            </h4>
+          </div>
+          <div class="panel-body">
+            <div class="row text-center" id="statsContainer">
+              <div class="col-md-4">
+                <h3 class="text-primary" id="todoCount">-</h3>
+                <p class="text-muted">待办事项总数</p>
+              </div>
+              <div class="col-md-4">
+                <h3 class="text-success" id="completedCount">-</h3>
+                <p class="text-muted">已完成事项</p>
+              </div>
+              <div class="col-md-4">
+                <h3 class="text-warning" id="pendingCount">-</h3>
+                <p class="text-muted">待完成事项</p>
+              </div>
+            </div>
+            <div class="text-center">
+              <button type="button" class="btn btn-sm btn-primary" id="loadStatsBtn">
+                <span class="glyphicon glyphicon-stats"></span> 加载统计数据
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近活动面板 -->
+        <div class="panel panel-success">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <span class="glyphicon glyphicon-time"></span> 账户信息
+            </h4>
+          </div>
+          <div class="panel-body">
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content">
+                  <h4 class="timeline-title">账户创建</h4>
+                  <p class="text-muted" th:if="${user.createdAt}">
+                    创建于 <span th:text="${#temporals.format(user.createdAt, 'yyyy年MM月dd日 HH:mm')}"></span>
+                  </p>
+                  <p class="text-muted" th:unless="${user.createdAt}">创建时间未知</p>
+                </div>
+              </div>
+              
+              <div class="timeline-item" th:if="${user.updatedAt}">
+                <div class="timeline-marker bg-info"></div>
+                <div class="timeline-content">
+                  <h4 class="timeline-title">最后更新</h4>
+                  <p class="text-muted">
+                    更新于 <span th:text="${#temporals.format(user.updatedAt, 'yyyy年MM月dd日 HH:mm')}"></span>
+                  </p>
+                </div>
+              </div>
+              
+              <div class="timeline-item">
+                <div class="timeline-marker bg-primary"></div>
+                <div class="timeline-content">
+                  <h4 class="timeline-title">当前状态</h4>
+                  <p>
+                    <span class="label label-success" th:if="${user.status == 1}">账户正常，可以登录使用</span>
+                    <span class="label label-default" th:if="${user.status != 1}">账户已禁用，无法登录</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+
+
+  <!-- 样式 -->
+  <style>
+    .timeline {
+      list-style: none;
+      padding: 20px 0 20px;
+      position: relative;
+    }
+
+    .timeline:before {
+      top: 0;
+      bottom: 0;
+      position: absolute;
+      content: " ";
+      width: 3px;
+      background-color: #eeeeee;
+      left: 15px;
+      margin-left: -1.5px;
+    }
+
+    .timeline-item {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .timeline-item:before,
+    .timeline-item:after {
+      content: "";
+      display: table;
+    }
+
+    .timeline-item:after {
+      clear: both;
+    }
+
+    .timeline-marker {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      left: 9px;
+      top: 5px;
+    }
+
+    .timeline-content {
+      margin-left: 35px;
+      padding: 10px;
+      background: #f7f7f9;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .timeline-content:before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 10px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-right: 8px solid #f7f7f9;
+    }
+
+    .timeline-title {
+      margin-top: 0;
+      color: #333;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .bg-success { background-color: #5cb85c; }
+    .bg-info { background-color: #5bc0de; }
+    .bg-primary { background-color: #337ab7; }
+  </style>
+
+  <!-- JavaScript -->
+  <script>
+    $(document).ready(function() {
+      var userId = /*[[${user.id}]]*/ null;
+
+
+
+      // 刷新用户信息
+      $('#refreshBtn').click(function() {
+        window.location.reload();
+      });
+
+      // 加载统计数据
+      $('#loadStatsBtn').click(function() {
+        var btn = $(this);
+        btn.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> 加载中...');
+
+        // 模拟加载统计数据（实际应该调用API）
+        setTimeout(function() {
+          // 这里可以调用实际的API获取用户的待办事项统计
+          // 目前显示模拟数据
+          var totalTodos = Math.floor(Math.random() * 20) + 1;
+          var completedTodos = Math.floor(Math.random() * totalTodos);
+          var pendingTodos = totalTodos - completedTodos;
+
+          $('#todoCount').text(totalTodos);
+          $('#completedCount').text(completedTodos);
+          $('#pendingCount').text(pendingTodos);
+
+          btn.prop('disabled', false).html('<span class="glyphicon glyphicon-stats"></span> 重新加载');
+          
+          // 添加动画效果
+          $('#statsContainer h3').addClass('animated bounce');
+          setTimeout(function() {
+            $('#statsContainer h3').removeClass('animated bounce');
+          }, 1000);
+        }, 1500);
+      });
+
+      // 添加简单的动画效果
+      $('.panel').hide().fadeIn(500);
+      
+      // 鼠标悬停效果
+      $('.btn').hover(
+        function() { $(this).addClass('animated pulse'); },
+        function() { $(this).removeClass('animated pulse'); }
+      );
+    });
+  </script>
+
+</body>
+
+</html> 

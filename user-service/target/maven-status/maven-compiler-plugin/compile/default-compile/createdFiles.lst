@@ -1,0 +1,15 @@
+com\example\userservice\controller\UserController$1.class
+com\example\userservice\repository\UserRoleRepository.class
+com\example\userservice\entity\Role.class
+com\example\userservice\repository\RoleRepository.class
+com\example\userservice\config\SecurityConfig.class
+com\example\userservice\UserServiceApplication.class
+com\example\userservice\controller\UserController.class
+com\example\userservice\service\UserService.class
+com\example\userservice\entity\UserRole.class
+com\example\userservice\entity\UserRole$UserRoleId.class
+com\example\userservice\service\CustomUserDetailsService.class
+com\example\userservice\entity\User.class
+com\example\userservice\repository\UserRepository.class
+com\example\userservice\dto\UserDTO.class
+com\example\userservice\config\WebConfig.class

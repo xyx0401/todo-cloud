@@ -1,0 +1,4 @@
+com\example\authservice\controller\AuthController.class
+com\example\authservice\service\AuthService.class
+com\example\authservice\AuthServiceApplication.class
+com\example\authservice\util\JwtUtil.class

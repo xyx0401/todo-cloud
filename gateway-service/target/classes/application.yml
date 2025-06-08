@@ -1,0 +1,135 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      # 全局CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      routes:
+        # API服务路由 - 优先级高，具体路径优先匹配
+        - id: user-api
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+            
+        - id: todo-api
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/todos/**
+          filters:
+            - StripPrefix=0
+            
+        - id: auth-api
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=0
+            
+        # 健康检查和系统信息路由到todo-service
+        - id: system-api
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/health,/api/info,/api/connectivity,/api/session,/api/db-test
+          filters:
+            - StripPrefix=0
+            
+        # 管理员页面路由 - 高优先级
+        - id: admin-user-management
+          uri: http://localhost:8081
+          predicates:
+            - Path=/admin/users/**
+          filters:
+            - StripPrefix=0
+            
+        - id: admin-pages
+          uri: http://localhost:8081
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=0
+            
+        # 静态资源路由
+        - id: static-resources
+          uri: http://localhost:8081
+          predicates:
+            - Path=/css/**,/js/**,/images/**,/webjars/**,/favicon.ico
+          filters:
+            - StripPrefix=0
+            
+        # 登录相关路由
+        - id: login-routes
+          uri: http://localhost:8081
+          predicates:
+            - Path=/login,/logout,/login/**
+          filters:
+            - StripPrefix=0
+            
+        # Todo操作路由 - 确保优先于通用路由
+        - id: todo-operations
+          uri: http://localhost:8081
+          predicates:
+            - Path=/add,/update,/delete/**
+          filters:
+            - StripPrefix=0
+            
+        # 主要页面路由
+        - id: main-pages
+          uri: http://localhost:8081
+          predicates:
+            - Path=/index,/
+          filters:
+            - StripPrefix=0
+            
+        # 所有其他请求都转发到todo-service（兜底路由）
+        - id: todo-all
+          uri: http://localhost:8081
+          predicates:
+            - Path=/** 
+          filters:
+            - StripPrefix=0
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.example.gatewayservice: DEBUG
+    org.springframework.cloud.gateway.route: DEBUG
+    org.springframework.cloud.gateway.handler: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{50}] - %msg%n"
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always 
